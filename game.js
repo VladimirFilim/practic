@@ -1,4 +1,7 @@
-﻿const speed = 10; //скорость 
+﻿var movementSpeed = 3; // Скорость движения (можете настроить)
+var timerInterval = 16; // Интервал в миллисекундах (примерно 60 кадров в секунду)
+var timer = setInterval(onTimer, timerInterval);
+
 let isMovingRight, isMovingLeft, isMovingUp, isMovingDown = false;
 
 class Sprite {
@@ -27,7 +30,7 @@ class Sprite {
         this.img.src = img;
 	}
 Update() {
-   this.spriteY += speed/5;
+   this.spriteY += movementSpeed/5;
    if(this.spriteY > canvas.height + 50) {
 		this.dead = true;
 	}
@@ -96,16 +99,11 @@ class Car
     }
  
     Update() {
-        this.y += speed;
+        this.y += movementSpeed;
 		if(this.y > canvas.height + 50) {
 			this.dead = true;
 		}
     }
- 
-    Move() {
-            
-    }
-	
 	
     Collide(car) {
     let hit = false;
@@ -140,9 +138,9 @@ class Road {
     }
  
     Update(road) {
-        this.y += speed; //При обновлении изображение смещается вниз
+        this.y += movementSpeed; //При обновлении изображение смещается вниз
         if(this.y > window.innerHeight) { //Если изображение ушло за край холста, то меняем положение
-            this.y = road.y - canvas.height + speed; //Новое положение указывается с учётом второго фона
+            this.y = road.y - canvas.height + movementSpeed; //Новое положение указывается с учётом второго фона
         }
     }
 }
@@ -182,8 +180,8 @@ const scale = 0.1; //Масштаб машин
 Resize(); // При загрузке страницы задаётся размер холста
  
 window.addEventListener("resize", Resize); //При изменении размеров окна будут меняться размеры холста
- 
 window.addEventListener("keydown", function (e) { KeyDown(e); }); //Получение нажатий с клавиатуры
+window.addEventListener("keyup", function (e) { KeyUp(e); });
 window.addEventListener("click", Start); //Получение нажатий с клавиатуры 
 let objects = []; //Массив игровых объектов
 let rovers = []; //Массив пешеходов
@@ -343,7 +341,7 @@ function KeyDown(key) {
 }
 
 function KeyUp(e) {
-    switch(key.keyCode) {
+    switch(e.keyCode) {
     case 65: //влево
         isMovingLeft = false;
         break;
@@ -364,16 +362,16 @@ function KeyUp(e) {
 
 function onTimer() {
     if(isMovingLeft) {
-        player.Move
+        player.x -= movementSpeed;
     }
     if(isMovingRight) {
-        player.Move
+        player.x += movementSpeed;
     }
     if(isMovingUp) {
-        player.Move
+        player.y -= movementSpeed;
     }
     if(isMovingDown) {
-        player.Move
+        player.y += movementSpeed;
     }
 }
 
