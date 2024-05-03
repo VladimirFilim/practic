@@ -1,33 +1,33 @@
-﻿var movementSpeed = 3; // Скорость движения (можете настроить)
+﻿//TODO: 
+// Фикс наслаивания машин друг на друга и спавна машин далеко на обочине - ОК
+// Увеличение размеров машин - ОК
+// Уменьшение кол-ва спавнящихся пешеходов и машин - ОК
+// Добавление различных моделей для пешеходов
+// Добавление различных моделей для машин
+// Добавление различных типов для пешеходов
+// Добавление различных типов для машин
+// Добавление ям на обочине
+// Добавление системы очков
+// Добавление системы усложнения игры
+// Добавление системы убийства пешеходов после того, как они достигли края обочины
+
+var movementSpeed = 3; // Скорость движения (можете настроить)
 var timerInterval = 16; // Интервал в миллисекундах (примерно 60 кадров в секунду)
 var timer = setInterval(onTimer, timerInterval);
-
+var roadWidth = 817;
+let chanceOfCarSpawnValue = 9850;
+let chanceOfPedestrianSpawnValue = 9960;
 let isMovingRight, isMovingLeft, isMovingUp, isMovingDown = false;
 
 class Sprite {
-    constructor (sp_options, img) {
-        this.dead = false;
+    constructor (sp_options) {
         this.SCALE = sp_options.scale;  //коэффициент увеличения
         this.WIDTH = sp_options.width;   // ширина кадра
         this.HEIGHT = sp_options.height;  //высота кадра
         this.SCALED_WIDTH = sp_options.scale * sp_options.width; // ширина увеличенного кадра (для отрисовки)
         this.SCALED_HEIGHT = sp_options.scale * sp_options.height;  //высота увеличенного кадра 
-        this.C_LOOP = sp_options.c_loop;  // порядок отрисовки кадров
-        this.FACING_DOWN = sp_options.facing_down;  // номер строки кадров при движении вниз
-        this.FACING_UP = sp_options.facing_up;      // номер строки кадров при движении вверх
-        this.FACING_LEFT = sp_options.facing_left;   // номер строки кадров при движении влево
-        this.FACING_RIGHT = sp_options.facing_right;   // номер строки кадров при движении вправо
-        this.FRAME_LIMIT = sp_options.frame_limit;     // общее количество кадров
-        this.MOVEMENT_SPEED = sp_options.movement_speed;  //скорость 
-        this.keyPresses = {};
-        this.currentDirection = sp_options.facing_down;
-        this.currentLoopIndex = 0;
-        this.frameCount = 0;
-        this.hit = false;
         this.spriteX = sp_options.spriteX;
         this.spriteY = sp_options.spriteY;
-        this.img = new Image();
-        this.img.src = img;
 	}
 Update() {
    this.spriteY += movementSpeed/5;
@@ -59,43 +59,58 @@ moveit(directionX, directionY, direction) {
   this.currentDirection = direction;
 }
 	
-moveLoop() {
-  let hasMoved = false;
-  //if (this.keyPresses.ArrowLeft) {
-	//  this.moveit(-this.MOVEMENT_SPEED, 0, this.FACING_LEFT);
-   //   hasMoved = true;
-  //} else if (this.keyPresses.ArrowRight) {
-	  this.moveit(this.MOVEMENT_SPEED, 0, this.FACING_RIGHT);
-	  hasMoved = true;
-  //}
+moveLoop() {    
+    let hasMoved = false;
+	this.moveit(this.MOVEMENT_SPEED, 0, this.FACING_RIGHT);
+	hasMoved = true;
 
-  if (hasMoved) {
-    this.frameCount++;
-    if (this.frameCount >= this.FRAME_LIMIT) {
-      this.frameCount = 0;
-      this.currentLoopIndex++;
-      if (this.currentLoopIndex >= this.C_LOOP.length) {
-        this.currentLoopIndex = 0;
-      }
+    if (hasMoved) {
+        this.frameCount++;
+        if (this.frameCount >= this.FRAME_LIMIT) {
+            this.frameCount = 0;
+            this.currentLoopIndex++;
+            if (this.currentLoopIndex >= this.C_LOOP.length) {
+                this.currentLoopIndex = 0;
+            }
+        }
     }
-  }
-
   if (!hasMoved) {
     this.currentLoopIndex = 0;
   }
 }	
 }
 
- 
- 
-class Car
-{
-    constructor(image, x, y) {
-		this.dead = false;
-        this.x = x;
-        this.y = y;
+class Car {
+    constructor(car_options) {
+        this.x = car_options.x;
+        this.y = car_options.y;
         this.image = new Image();
-        this.image.src = image;
+        this.image.src = car_options.imageSrc;
+    }
+
+    static spawnNewCar() {
+        if (RandomInteger(0, 10000) > chanceOfCarSpawnValue) {
+            let randomX = RandomInteger(30, canvas.width - 50);
+            let randomY = RandomInteger(250, 400) * -1;
+            let carWidth = 195;
+            if (checkIfCarAbleToSpawn(randomX, carWidth)) {
+                let car_options = {
+                    x: randomX,
+                    y: randomY,
+                    image: new Image()
+                };
+                car_options.image.src = "images/car_red.png";
+                objects.push(new Car(car_options));
+            }
+        }
+    }
+}
+ 
+class PlayersCar extends Car
+{
+    constructor(player_options) {
+        super(player_options);
+        this.dead = false;
     }
  
     Update() {
@@ -105,7 +120,7 @@ class Car
 		}
     }
 	
-    Collide(car) {
+    CollideWithCar(car) {
     let hit = false;
     if(this.y < car.y + car.image.height * scale && this.y + this.image.height * scale > car.y) {//Если объекты находятся на одной линии по горизонтали
         if(this.x < car.x + car.image.width * scale && this.x + this.image.width * scale > car.x ) { //Если объекты находятся на одной линии по вертикали
@@ -115,11 +130,10 @@ class Car
     return hit;
     }
 	
-	Kill(rover) {
+	CollideWithPedestrian(pedestrians) {
         let hit = false;
-        console.log(`${this.y} < ${rover.spriteY} + ${rover.SCALED_HEIGHT} && ${this.y + this.image.height * scale} > ${rover.spriteY}`); 
-        if(this.y < rover.spriteY + rover.SCALED_HEIGHT && this.y + this.image.height * scale > rover.spriteY) { //Если объекты находятся на одной линии по горизонтали
-            if(this.x < rover.spriteX + rover.SCALED_WIDTH  && this.x + this.image.width * scale > rover.spriteX ) { //Если объекты находятся на одной линии по вертикали
+        if(this.y < pedestrians.spriteY + pedestrians.SCALED_HEIGHT && this.y + this.image.height * scale > pedestrians.spriteY) { //Если объекты находятся на одной линии по горизонтали
+            if(this.x < pedestrians.spriteX + pedestrians.SCALED_WIDTH  && this.x + this.image.width * scale > pedestrians.spriteX ) { //Если объекты находятся на одной линии по вертикали
                 hit = true;
             }
         }
@@ -127,6 +141,56 @@ class Car
     }
 }
 
+class Pedestrian extends Sprite {
+    constructor(sp_options, pedestrian_options) {
+        super(sp_options)
+        this.C_LOOP = pedestrian_options.c_loop;  // порядок отрисовки кадров
+        this.FACING_DOWN = pedestrian_options.facing_down;  // номер строки кадров при движении вниз
+        this.FACING_UP = pedestrian_options.facing_up;      // номер строки кадров при движении вверх
+        this.FACING_LEFT = pedestrian_options.facing_left;   // номер строки кадров при движении влево
+        this.FACING_RIGHT = pedestrian_options.facing_right;   // номер строки кадров при движении вправо
+        this.FRAME_LIMIT = pedestrian_options.frame_limit;     // общее количество кадров
+        this.MOVEMENT_SPEED = pedestrian_options.movement_speed;  //скорость 
+        this.currentDirection = pedestrian_options.facing_down;
+        this.currentLoopIndex = 0;
+        this.frameCount = 0;
+        this.img = new Image();
+        this.img.src = img;
+    }
+
+    Update() {
+        if(RandomInteger(0, 10000) > chanceOfPedestrianSpawnValue) { //создание новых пешеходов
+            let sp_options = {
+                scale: 2,
+                width: 16,
+                height: 18,
+                spriteX: 10,
+                spriteY: RandomInteger(0, canvas.height/4),
+            };
+            let pedestrian_options = {
+                c_loop: [0, 1, 0, 2], 
+                facing_down: 0,
+                facing_up: 1,
+                facing_left: 2,
+                facing_right: 3,
+                frame_limit: RandomInteger(3, 12),
+                movement_speed: RandomInteger(1, 5),
+                img: 'images/gc.png'
+            }
+            pedestrians.push(new Pedestrian(sp_options, pedestrian_options));
+        }
+    }
+
+    PedestrianKill(pedestrians) {
+        for(let i = 0; i < pedestrians.length; i++) {
+            if(pedestrians[i].spriteX + pedestrians.SCALED_WIDTH >= 1080) {
+                pedestrians[i].splice(i, 1);
+            }
+        }
+    }
+
+
+}
 
 class Road {
     constructor(image, y) {
@@ -184,7 +248,7 @@ window.addEventListener("keydown", function (e) { KeyDown(e); }); //Получе
 window.addEventListener("keyup", function (e) { KeyUp(e); });
 window.addEventListener("click", Start); //Получение нажатий с клавиатуры 
 let objects = []; //Массив игровых объектов
-let rovers = []; //Массив пешеходов
+let pedestrians = []; //Массив пешеходов
 
 let roads = [
     new Road("images/road.jpg", 0),
@@ -192,7 +256,13 @@ let roads = [
 ]; 
  
  //Объект, которым управляет игрок
- let player = new Car("images/car.png", canvas.width / 2, canvas.height / 2, true);
+ let player_options = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    image: new Image()
+};
+player_options.image.src = "images/players_car.png";
+let player = new PlayersCar(player_options);
  
 function Start() {
 	window.removeEventListener("click", Start); //удаление нажатий с клавиатуры 
@@ -209,49 +279,16 @@ function Stop() {
 function Update() {
 	roads[0].Update(roads[1]);
     roads[1].Update(roads[0]);
-
-	if(RandomInteger(0, 10000) > 9700) { //создание новых автомобилей
-		objects.push(new Car("images/car_red.png", RandomInteger(30, canvas.width - 50), RandomInteger(250, 400) * -1, false));
-	}
 	
-	if(RandomInteger(0, 10000) > 9900) { //создание новых автомобилей
-		let sp_options = {
-            scale: 2,
-            width: 16,
-            height: 18,
-            c_loop: [0, 1, 0, 2], 
-            facing_down: 0,
-            facing_up: 1,
-            facing_left: 2,
-            facing_right: 3,
-            frame_limit: RandomInteger(3, 12),
-            movement_speed: RandomInteger(1, 5),
-            spriteX: 10,
-            spriteY: RandomInteger(0, canvas.height/4)
-        };
-	    rovers.push(new Sprite(sp_options,'images/gc.png'));
-	}
-	
-	
-
-	for(let i = 0; i < objects.length; i++) {
-		objects[i].Update();
-	}
-
-
-	objects = objects.filter(function (n) {
-      return !n.dead
-    })
-	
-	for(let i = 0; i < rovers.length; i++) {
-		rovers[i].Update();
-		rovers[i].moveLoop();
+	for(let i = 0; i < pedestrians.length; i++) {
+		pedestrians[i].Update();
+		pedestrians[i].moveLoop();
 	}
 	
 	let hit = false;
 
 	for(let i = 0; i < objects.length; i++) {
-		hit = player.Collide(objects[i]);
+		hit = player.CollideWithCar(objects[i]);
 		if(hit) {						
 			Stop();
 			time_bum = setInterval(bum, 50);
@@ -261,8 +298,8 @@ function Update() {
 	}
 	
 	
-	for(let i = 0; i < rovers.length; i++) {
-		hit = player.Kill(rovers[i]);
+	for(let i = 0; i < pedestrians.length; i++) {
+		hit = player.CollideWithPedestrian(pedestrians[i]);
 		if(hit) {					
 			Stop();
 			time_bum = setInterval(bum, 50);
@@ -270,7 +307,26 @@ function Update() {
 			break;
 		}
 	}
+
+    Car.spawnNewCar();
+
     Draw();
+}
+
+function checkIfCarAbleToSpawn(carX, carWidth) {
+    let isOnRoad = carX + carWidth / 2 >= (canvas.width - roadWidth) / 2 && carX + carWidth / 2 <= (canvas.width + roadWidth) / 2;
+    
+    // Проверка, что машина не появится на другой машине
+    let isNotOnAnotherCar = true;
+    for (let i = 0; i < objects.length; i++) {
+        let otherCar = objects[i];
+        if (carX < otherCar.x + otherCar.image.width * scale && carX + carWidth > otherCar.x) {
+            isNotOnAnotherCar = false; // Появится на другой машине
+            break;
+        }
+    }
+
+    return isOnRoad && isNotOnAnotherCar;
 }
 
 function bum() {
@@ -306,8 +362,8 @@ function Draw() { //Работа с графикой
 		DrawCar(objects[i]);
 	}
 	
-	for(let i = 0; i < rovers.length; i++) {   
-        rovers[i].drawFrame();
+	for(let i = 0; i < pedestrians.length; i++) {   
+        pedestrians[i].drawFrame();
 	}
 }
 
