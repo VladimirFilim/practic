@@ -175,7 +175,7 @@ let time_bum;
 const canvas = document.getElementById("canvas"); 
 //Получение холста из DOM
 const ctx = canvas.getContext("2d"); 
-const scale = 0.1; //Масштаб машин
+const scale = 0.2; //Масштаб машин
 
 Resize(); // При загрузке страницы задаётся размер холста
  
