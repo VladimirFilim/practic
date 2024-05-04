@@ -1,8 +1,11 @@
-﻿var movementSpeed = 3; // Скорость движения (можете настроить)
+﻿﻿var movementSpeed = 3; // Скорость движения (можете настроить)
 var timerInterval = 16; // Интервал в миллисекундах (примерно 60 кадров в секунду)
 var timer = setInterval(onTimer, timerInterval);
-
+var roadWidth = 817;
+let chanceOfCarSpawnVal = 9830;
+let chanceOfPedestrianSpawnVal = 9960;
 let isMovingRight, isMovingLeft, isMovingUp, isMovingDown = false;
+let carWidth = 195;
 
 class Sprite {
     constructor(sp_options, img) {
@@ -111,7 +114,6 @@ class Car {
 
     CollideWithPedestrian(pedestrian) {
         let hit = false;
-        console.log(`${this.y} < ${pedestrian.spriteY} + ${pedestrian.SCALED_HEIGHT} && ${this.y + this.image.height * scale} > ${pedestrian.spriteY}`);
         if (this.y < pedestrian.spriteY + pedestrian.SCALED_HEIGHT && this.y + this.image.height * scale > pedestrian.spriteY) { //Если объекты находятся на одной линии по горизонтали
             if (this.x < pedestrian.spriteX + pedestrian.SCALED_WIDTH && this.x + this.image.width * scale > pedestrian.spriteX) { //Если объекты находятся на одной линии по вертикали
                 hit = true;
@@ -201,11 +203,15 @@ function Update() {
     roads[0].Update(roads[1]);
     roads[1].Update(roads[0]);
 
-    if (RandomInteger(0, 10000) > 9700) { //создание новых автомобилей
-        cars.push(new Car("images/car_red.png", RandomInteger(30, canvas.width - 50), RandomInteger(250, 400) * -1, false));
+    if (RandomInteger(0, 10000) > chanceOfCarSpawnVal) { //создание новых автомобилей
+        let randomCarX = RandomInteger(30, canvas.width - 50);
+        let randomCarY = RandomInteger(250, 400) * -1;
+        if(checkIfCarAbleToSpawn(randomCarX, carWidth)) {
+            cars.push(new Car("images/car_red.png", randomCarX, randomCarY, false));
+        }
     }
 
-    if (RandomInteger(0, 10000) > 9900) { //создание новых автомобилей
+    if (RandomInteger(0, 10000) > chanceOfPedestrianSpawnVal) { //создание новых пешеходов
         let sp_options = {
             scale: 2,
             width: 16,
@@ -237,12 +243,19 @@ function Update() {
     for (let i = 0; i < pedestrians.length; i++) {
         pedestrians[i].Update();
         pedestrians[i].moveLoop();
+
+        if (pedestrians[i].spriteX >= 1000) {
+            pedestrians.splice(i, 1);
+        }
     }
 
     let hit = false;
 
     for (let i = 0; i < cars.length; i++) {
         hit = player.CollideWithCar(cars[i]);
+        if(cars[i].y >= 675) {
+            cars.splice(i, 1);
+        }
         if (hit) {
             Stop();
             time_bum = setInterval(bum, 50);
