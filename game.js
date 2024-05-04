@@ -1,4 +1,5 @@
-﻿﻿var movementSpeed = 3; // Скорость движения (можете настроить)
+﻿// game.js
+var movementSpeed = 3; // Скорость движения (можете настроить)
 var timerInterval = 16; // Интервал в миллисекундах (примерно 60 кадров в секунду)
 var timer = setInterval(onTimer, timerInterval);
 var roadWidth = 817;
@@ -84,8 +85,6 @@ class Sprite {
     }
 }
 
-
-
 class Car {
     constructor(image, x, y) {
         this.dead = false;
@@ -122,7 +121,6 @@ class Car {
         return hit;
     }
 }
-
 
 class Road {
     constructor(image, y) {
@@ -168,7 +166,7 @@ let time_bum;
 const canvas = document.getElementById("canvas");
 //Получение холста из DOM
 const ctx = canvas.getContext("2d");
-const scale = 0.2; //Масштаб машин
+const scale = 0.15; //Масштаб машин
 
 Resize(); // При загрузке страницы задаётся размер холста
 
@@ -185,7 +183,7 @@ let roads = [
 ];
 
 //Объект, которым управляет игрок
-let player = new Car("images/car.png", canvas.width / 2, canvas.height / 2, true);
+let player = new Car("images/car.png", canvas.width * 0.5, canvas.height * 0.5, true);
 
 function Start() {
     window.removeEventListener("click", Start); //удаление нажатий с клавиатуры 
@@ -197,7 +195,6 @@ function Stop() {
     window.removeEventListener("keydown", function (e) { KeyDown(e); }, false);
     clearInterval(timer); //Остановка обновления
 }
-
 
 function Update() {
     roads[0].Update(roads[1]);
@@ -213,7 +210,7 @@ function Update() {
 
     if (RandomInteger(0, 10000) > chanceOfPedestrianSpawnVal) { //создание новых пешеходов
         let sp_options = {
-            scale: 2,
+            scale: 3,
             width: 16,
             height: 18,
             c_loop: [0, 1, 0, 2],
@@ -224,17 +221,21 @@ function Update() {
             frame_limit: RandomInteger(3, 12),
             movement_speed: RandomInteger(1, 5),
             spriteX: 10,
-            spriteY: RandomInteger(0, canvas.height / 4)
+            spriteY: RandomInteger(0, canvas.height * 0.25)
         };
+        for (let i = 0; i < pedestrians.length; i++) {
+            console.log("Pedestrian position:", pedestrians[i].spriteX, pedestrians[i].spriteY);
+            console.log(pedestrians[i].img.src);
+            console.log(pedestrians[i].img.width);
+            console.log(pedestrians[i].img.height);
+            pedestrians[i].drawFrame(); 
+        }        
         pedestrians.push(new Sprite(sp_options, 'images/gc.png'));
     }
-
-
 
     for (let i = 0; i < cars.length; i++) {
         cars[i].Update();
     }
-
 
     cars = cars.filter(function (n) {
         return !n.dead
@@ -244,7 +245,7 @@ function Update() {
         pedestrians[i].Update();
         pedestrians[i].moveLoop();
 
-        if (pedestrians[i].spriteX >= 1000) {
+        if (pedestrians[i].spriteX >= 1400) {
             pedestrians.splice(i, 1);
         }
     }
@@ -260,10 +261,10 @@ function Update() {
             Stop();
             time_bum = setInterval(bum, 50);
             player.dead = true;
+            alert("Died from Car collide!");
             break;
         }
     }
-
 
     for (let i = 0; i < pedestrians.length; i++) {
         hit = player.CollideWithPedestrian(pedestrians[i]);
@@ -271,6 +272,7 @@ function Update() {
             Stop();
             time_bum = setInterval(bum, 50);
             player.dead = true;
+            alert("Died from Pedestrian collide!");
             break;
         }
     }
@@ -278,7 +280,9 @@ function Update() {
 }
 
 function checkIfCarAbleToSpawn(carX, carWidth) {
-    let isOnRoad = carX + carWidth / 2 >= (canvas.width - roadWidth) / 2 && carX + carWidth / 2 <= (canvas.width + roadWidth) / 2;
+    let roadLeftBorder = 183;
+    let roadRightBorder = 825;
+    let isOnRoad = carX + carWidth >= roadLeftBorder && carX + carWidth / 2 <= roadRightBorder;
 
     // Проверка, что машина не появится на другой машине
     let isNotOnAnotherCar = true;
@@ -414,7 +418,6 @@ function DrawCar(car) { // отрисовка автомобиля
         car.image.height * scale
     );
 }
-
 
 function RandomInteger(min, max) {
     let rand = min - 0.5 + Math.random() * (max - min + 1);
