@@ -1,12 +1,22 @@
 ﻿// game.js
+//TODO:
+// Разобраться с координатами (Пешеходы должны исчезать за областью видимости, как и машины)
+// Игрок не должен иметь возможности на то, чтобы уехать за область видимости
+// Пешеходы должны иметь возможность с каким-то шансом вставать посреди дороги и смотреть на водителя
+// Добавление ям на обочине в силе
+// Возможно добавление следа от шин при торможении
+// Добавить динамику
+// Добавить систему счета + усложнения игры в зависимости от очков
+// Возможно изменение времени суток и изменение погоды (ориентироваться на оставшееся время)
+
 var movementSpeed = 3; // Скорость движения (можете настроить)
 var timerInterval = 16; // Интервал в миллисекундах (примерно 60 кадров в секунду)
 var timer = setInterval(onTimer, timerInterval);
-var roadWidth = 817;
 let chanceOfCarSpawnVal = 9830;
 let chanceOfPedestrianSpawnVal = 9960;
 let isMovingRight, isMovingLeft, isMovingUp, isMovingDown = false;
-let carWidth = 195;
+let roadsideRightBorder;
+let roadsideLeftBorder;
 
 class Sprite {
     constructor(sp_options, img) {
@@ -199,12 +209,15 @@ function Stop() {
 function Update() {
     roads[0].Update(roads[1]);
     roads[1].Update(roads[0]);
+    roadsideLeftBorder = canvas.width / 100 * 20;
+    roadsideRightBorder = canvas.width / 5 * 4 - 40;
 
-    if (RandomInteger(0, 10000) > chanceOfCarSpawnVal) { //создание новых автомобилей
-        let randomCarX = RandomInteger(30, canvas.width - 50);
-        let randomCarY = RandomInteger(250, 400) * -1;
-        if(checkIfCarAbleToSpawn(randomCarX, carWidth)) {
-            cars.push(new Car("images/car_red.png", randomCarX, randomCarY, false));
+    if (RandomInteger(0, 10000) > chanceOfCarSpawnVal) { 
+        let randomCarX = RandomInteger(roadsideLeftBorder, roadsideRightBorder);
+        let randomCarY = RandomInteger(-100, -50); // Генерация случайной координаты y за пределами видимой области сверху
+        let car = new Car("images/car_red.png", randomCarX, randomCarY);
+        if(checkIfCarAbleToSpawn(car, cars)) { // Передача массива всех машин
+            cars.push(car);
         }
     }
 
@@ -224,10 +237,6 @@ function Update() {
             spriteY: RandomInteger(0, canvas.height * 0.25)
         };
         for (let i = 0; i < pedestrians.length; i++) {
-            console.log("Pedestrian position:", pedestrians[i].spriteX, pedestrians[i].spriteY);
-            console.log(pedestrians[i].img.src);
-            console.log(pedestrians[i].img.width);
-            console.log(pedestrians[i].img.height);
             pedestrians[i].drawFrame(); 
         }        
         pedestrians.push(new Sprite(sp_options, 'images/gc.png'));
@@ -279,22 +288,20 @@ function Update() {
     Draw();
 }
 
-function checkIfCarAbleToSpawn(carX, carWidth) {
-    let roadLeftBorder = 183;
-    let roadRightBorder = 825;
-    let isOnRoad = carX + carWidth >= roadLeftBorder && carX + carWidth / 2 <= roadRightBorder;
-
+function checkIfCarAbleToSpawn(car, allCars) { // Передача массива всех машин
     // Проверка, что машина не появится на другой машине
     let isNotOnAnotherCar = true;
-    for (let i = 0; i < cars.length; i++) {
-        let otherCar = cars[i];
-        if (carX < otherCar.x + otherCar.image.width * scale && carX + carWidth > otherCar.x) {
+    for (let i = 0; i < allCars.length; i++) {
+        let otherCar = allCars[i];
+        if (car.x < otherCar.x + otherCar.image.width * scale && 
+            car.x + car.image.width * scale > otherCar.x && 
+            car.y + car.image.height * scale > otherCar.y) {
             isNotOnAnotherCar = false; // Появится на другой машине
+            console.log("Car spawn rejected!!!")
             break;
         }
     }
-
-    return isOnRoad && isNotOnAnotherCar;
+    return isNotOnAnotherCar;
 }
 
 function bum() {
