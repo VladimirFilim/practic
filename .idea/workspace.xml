@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="db0221de-023c-45f2-9910-abb10ec2e339" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/game.js" beforeDir="false" afterPath="$PROJECT_DIR$/game.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -42,7 +43,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "bug-fix-and-refactor",
     "last_opened_file_path": "/home/vladimir/repo/practic",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -80,7 +81,7 @@
       <workItem from="1715618448918" duration="4930000" />
       <workItem from="1715623384623" duration="905000" />
       <workItem from="1715624338509" duration="227000" />
-      <workItem from="1716115157401" duration="2598000" />
+      <workItem from="1716115157401" duration="7613000" />
     </task>
     <servers />
   </component>

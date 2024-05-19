@@ -10,10 +10,16 @@
 
 const TIMER_INTERVAL = 16; // Интервал в миллисекундах (примерно 60 кадров в секунду)
 const CANVAS = document.getElementById("canvas");
-const ctx = CANVAS.getContext("2d");
-const scale = (CANVAS.width + CANVAS.height) / 2100; //Масштаб машин
+const CONTEXT = CANVAS.getContext("2d");
+const SCALE = (CANVAS.width + CANVAS.height) / 1200; //Масштаб машин
+const DECELERATION = 0.4; // Замедление при торможении
+const NATURAL_DECELERATION = DECELERATION / 2; // Естественное замедление при отпускании W
+const MAX_SPEED = 3; // Максимальная скорость
 
-let carMovementSpeed = 5; // Скорость движения (можете настроить)
+let currentSpeed = 0; // Текущая скорость игрока
+let isBraking = false; // Флаг торможения
+let isAccelerating = false; // Флаг ускорения
+let carMovementSpeed = 3; // Скорость движения (можете настроить)
 let timer = setInterval(onTimer, TIMER_INTERVAL);
 let chanceOfCarSpawnVal = 9830;
 let chanceOfPedestrianSpawnVal = 9960;
@@ -77,7 +83,7 @@ class Sprite {
     }
 
     drawFrame() {
-        ctx.drawImage(
+        CONTEXT.drawImage(
             this.img,
             this.C_LOOP[this.currentLoopIndex] * this.WIDTH,
             this.currentDirection * this.HEIGHT,
@@ -128,6 +134,7 @@ class Car {
         this.y = y;
         this.image = new Image();
         this.image.src = image;
+        this.speed = RandomInteger(1, 2);
     }
 
     Update() {
@@ -139,8 +146,8 @@ class Car {
 
     CollideWithCar(car) {
         let hit = false;
-        if (this.y < car.y + car.image.height * scale && this.y + this.image.height * scale > car.y) {//Если объекты находятся на одной линии по горизонтали
-            if (this.x < car.x + car.image.width * scale && this.x + this.image.width * scale > car.x) { //Если объекты находятся на одной линии по вертикали
+        if (this.y < car.y + car.image.height * SCALE && this.y + this.image.height * SCALE > car.y) {//Если объекты находятся на одной линии по горизонтали
+            if (this.x < car.x + car.image.width * SCALE && this.x + this.image.width * SCALE > car.x) { //Если объекты находятся на одной линии по вертикали
                 hit = true;
             }
         }
@@ -149,8 +156,8 @@ class Car {
 
     CollideWithPedestrian(pedestrian) {
         let hit = false;
-        if (this.y < pedestrian.spriteY + pedestrian.SCALED_HEIGHT && this.y + this.image.height * scale > pedestrian.spriteY) { //Если объекты находятся на одной линии по горизонтали
-            if (this.x < pedestrian.spriteX + pedestrian.SCALED_WIDTH && this.x + this.image.width * scale > pedestrian.spriteX) { //Если объекты находятся на одной линии по вертикали
+        if (this.y < pedestrian.spriteY + pedestrian.SCALED_HEIGHT && this.y + this.image.height * SCALE > pedestrian.spriteY) { //Если объекты находятся на одной линии по горизонтали
+            if (this.x < pedestrian.spriteX + pedestrian.SCALED_WIDTH && this.x + this.image.width * SCALE > pedestrian.spriteX) { //Если объекты находятся на одной линии по вертикали
                 hit = true;
             }
         }
@@ -194,14 +201,14 @@ let roads = [
 let player = new Car("images/car.png", CANVAS.width * 0.5, CANVAS.height * 0.5, true);
 
 function Start() {
-    window.removeEventListener("click", Start); //удаление нажатий с клавиатуры 
-    timer = setInterval(Update, 1000 / 60); //Состояние игры будет обновляться 60 раз в секунду — при такой частоте обновление происходящего будет казаться очень плавным
+    window.removeEventListener("click", Start); // удаление нажатий с клавиатуры
+    timer = setInterval(Update, 1000 / 60); // Состояние игры будет обновляться 60 раз в секунду — при такой частоте обновление происходящего будет казаться очень плавным
 }
 
 function Stop() {
-    window.removeEventListener("click", Start); //удаление нажатий с клавиатуры 
+    window.removeEventListener("click", Start); // удаление нажатий с клавиатуры
     window.removeEventListener("keydown", function (e) { KeyDown(e); }, false);
-    clearInterval(timer); //Остановка обновления
+    clearInterval(timer); // Остановка обновления
 }
 
 function Update() {
@@ -209,6 +216,11 @@ function Update() {
     roads[1].Update(roads[0]);
     roadsideLeftBorder = CANVAS.width / 100 * 20;
     roadsideRightBorder = CANVAS.width / 5 * 4 - 40;
+
+    for (let i = 0; i < cars.length; i++) {
+        // Обновление позиции машины по вертикали с учетом случайной скорости
+        cars[i].y -= cars[i].speed;
+    }
 
     if (RandomInteger(0, 10000) > chanceOfCarSpawnVal) {
         let randomCarX = RandomInteger(roadsideLeftBorder, roadsideRightBorder);
@@ -291,9 +303,9 @@ function checkIfCarAbleToSpawn(car, allCars) {
     let isNotOnAnotherCar = true;
     for (let i = 0; i < allCars.length; i++) {
         let otherCar = allCars[i];
-        if (car.x < otherCar.x + otherCar.image.width * scale && 
-            car.x + car.image.width * scale > otherCar.x && 
-            car.y + car.image.height * scale > otherCar.y) {
+        if (car.x < otherCar.x + otherCar.image.width * SCALE &&
+            car.x + car.image.width * SCALE > otherCar.x &&
+            car.y + car.image.height * SCALE > otherCar.y) {
             isNotOnAnotherCar = false; // Появится на другой машине
             console.log("Car spawn rejected!!!")
             break;
@@ -304,21 +316,21 @@ function checkIfCarAbleToSpawn(car, allCars) {
 
 function bum() {
     if (gifOptions.numFrame < gifOptions.src.length) {
-        ctx.clearRect(0, 0, CANVAS.width, CANVAS.height);
+        CONTEXT.clearRect(0, 0, CANVAS.width, CANVAS.height);
         Draw();
         let img = new Image();
         img.src = gifOptions.src[gifOptions.numFrame];
         img.onload = function () {
-            ctx.drawImage(img, player.x - img.width / 2, player.y - img.height / 2);
+            CONTEXT.drawImage(img, player.x - img.width / 2, player.y - img.height / 2);
             gifOptions.numFrame++;
         }
     } else { clearInterval(time_bum) }
 }
 
 function Draw() { //Работа с графикой
-    ctx.clearRect(0, 0, CANVAS.width, CANVAS.height); //Очистка холста от предыдущего кадра
+    CONTEXT.clearRect(0, 0, CANVAS.width, CANVAS.height); //Очистка холста от предыдущего кадра
     for (let i = 0; i < roads.length; i++) {
-        ctx.drawImage(
+        CONTEXT.drawImage(
             roads[i].image, //Изображение для отрисовки
             0, //Начальное положение по оси X на изображении
             0, //Начальное положение по оси Y на изображении
@@ -342,27 +354,24 @@ function Draw() { //Работа с графикой
 
 function KeyDown(key) {
     switch (key.keyCode) {
-        case 65: //влево
+        case 65: // влево
             isMovingLeft = true;
             break;
-
-        case 68: //вправо
+        case 68: // вправо
             isMovingRight = true;
             break;
-
-        case 87: //вверх
-            isMovingUp = true;
+        case 87: // вверх (ускорение)
+            isAccelerating = true;
+            isBraking = false;
             break;
-
-        case 83: //вниз
-            isMovingDown = true;
+        case 83: // вниз (торможение)
+            isBraking = true;
+            isAccelerating = false;
             break;
-
-        case 27: //Esc
+        case 27: // Esc
             if (timer == null) {
                 Start();
-            }
-            else {
+            } else {
                 Stop();
             }
             break;
@@ -371,20 +380,17 @@ function KeyDown(key) {
 
 function KeyUp(e) {
     switch (e.keyCode) {
-        case 65: //влево
+        case 65: // влево
             isMovingLeft = false;
             break;
-
-        case 68: //вправо
+        case 68: // вправо
             isMovingRight = false;
             break;
-
-        case 87: //вверх
-            isMovingUp = false;
+        case 87: // вверх (ускорение)
+            isAccelerating = false;
             break;
-
-        case 83: //вниз
-            isMovingDown = false;
+        case 83: // вниз (торможение)
+            isBraking = false;
             break;
     }
 }
@@ -396,18 +402,18 @@ function onTimer() {
     if (isMovingRight) {
         player.x += carMovementSpeed;
     }
-    if (isMovingUp) {
-        player.y -= carMovementSpeed;
-        roads.forEach(road => road.y += carMovementSpeed);
-        cars.forEach(car => car.y += carMovementSpeed); // Двигать машины вниз
-        pedestrians.forEach(pedestrian => pedestrian.spriteY += carMovementSpeed); // Двигать пешеходов вниз
+    if (isAccelerating) {
+        currentSpeed = Math.min(currentSpeed + DECELERATION, MAX_SPEED); // Ускорение
+    } else if (isBraking) {
+        currentSpeed = Math.max(currentSpeed - DECELERATION, -MAX_SPEED); // Торможение
+    } else {
+        currentSpeed = Math.max(currentSpeed - NATURAL_DECELERATION, 0); // Естественное замедление
     }
-    if (isMovingDown) {
-        player.y += carMovementSpeed;
-        roads.forEach(road => road.y -= carMovementSpeed);
-        cars.forEach(car => car.y -= carMovementSpeed); // Двигать машины вверх
-        pedestrians.forEach(pedestrian => pedestrian.spriteY -= carMovementSpeed); // Двигать пешеходов вверх
-    }
+
+    player.y -= currentSpeed; // Обновляем положение игрока с учетом текущей скорости
+    roads.forEach(road => road.y += currentSpeed);
+    cars.forEach(car => car.y += currentSpeed); // Двигать машины вниз
+    pedestrians.forEach(pedestrian => pedestrian.spriteY += currentSpeed); // Двигать пешеходов вниз
 }
 
 function Resize() {
@@ -417,7 +423,7 @@ function Resize() {
 
 
 function DrawCar(car) { // отрисовка автомобиля
-    ctx.drawImage(
+    CONTEXT.drawImage(
         car.image,
         0,
         0,
@@ -425,8 +431,8 @@ function DrawCar(car) { // отрисовка автомобиля
         car.image.height,
         car.x,
         car.y,
-        car.image.width * scale,
-        car.image.height * scale
+        car.image.width * SCALE,
+        car.image.height * SCALE
     );
 }
 
@@ -440,7 +446,7 @@ function Draw0() { //Кнопка старт
     let start = new Image();
     start.src = "images/start.png";
     start.onload = function () {
-        ctx.drawImage(start, CANVAS.width / 3, CANVAS.height / 5);
+        CONTEXT.drawImage(start, CANVAS.width / 3, CANVAS.height / 5);
     }
 }
 
