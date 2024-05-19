@@ -12,9 +12,10 @@ const TIMER_INTERVAL = 16; // Интервал в миллисекундах (п
 const CANVAS = document.getElementById("canvas");
 const CONTEXT = CANVAS.getContext("2d");
 const SCALE = (CANVAS.width + CANVAS.height) / 1200; //Масштаб машин
-const DECELERATION = 0.4; // Замедление при торможении
+const DECELERATION = 0.2; // Замедление при торможении
 const NATURAL_DECELERATION = DECELERATION / 2; // Естественное замедление при отпускании W
-const MAX_SPEED = 3; // Максимальная скорость
+const MAX_SPEED = 3.5; // Максимальная скорость
+const MAX_CAR_SPEED = 3;
 
 let currentSpeed = 0; // Текущая скорость игрока
 let isBraking = false; // Флаг торможения
@@ -177,7 +178,7 @@ class Road {
     Update(road) {
         this.y += carMovementSpeed; //При обновлении изображение смещается вниз
         if (this.y > window.innerHeight) { //Если изображение ушло за край холста, то меняем положение
-            this.y = road.y - CANVAS.height + carMovementSpeed; //Новое положение указывается с учётом второго фона
+            this.y = road.y - CANVAS.height + carMovementSpeed ; //Новое положение указывается с учётом второго фона
         }
         if (this.y < -CANVAS.height) { // Если изображение ушло за край холста вверх
             this.y = road.y + CANVAS.height - carMovementSpeed; // Новое положение указывается с учётом второго фона
@@ -396,19 +397,31 @@ function KeyUp(e) {
 }
 
 function onTimer() {
+    if (player.y + player.image.height * SCALE > CANVAS.height) {
+        player.y = CANVAS.height - player.image.height * SCALE;
+    }
     if (isMovingLeft) {
         player.x -= carMovementSpeed;
+        if (player.x < 0) { // Проверка выхода за левую границу
+            player.x = 0;
+        }
     }
     if (isMovingRight) {
         player.x += carMovementSpeed;
+        if (player.x + player.image.width * SCALE > CANVAS.width) { // Проверка выхода за правую границу
+            player.x = CANVAS.width - player.image.width * SCALE;
+        }
     }
     if (isAccelerating) {
         currentSpeed = Math.min(currentSpeed + DECELERATION, MAX_SPEED); // Ускорение
+        carMovementSpeed = currentSpeed;
     } else if (isBraking) {
-        currentSpeed = Math.max(currentSpeed - DECELERATION, -MAX_SPEED); // Торможение
+        currentSpeed = Math.max(currentSpeed - DECELERATION, -MAX_CAR_SPEED + 1); // Торможение до новой минимальной скорости для обычных машин плюс 1
+        carMovementSpeed = -currentSpeed;
     } else {
         currentSpeed = Math.max(currentSpeed - NATURAL_DECELERATION, 0); // Естественное замедление
     }
+
 
     player.y -= currentSpeed; // Обновляем положение игрока с учетом текущей скорости
     roads.forEach(road => road.y += currentSpeed);
