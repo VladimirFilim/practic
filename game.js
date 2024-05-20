@@ -1,10 +1,7 @@
 ﻿//TODO:
-// Разобраться с координатами (Пешеходы должны исчезать за областью видимости, как и машины)
-// Игрок не должен иметь возможности на то, чтобы уехать за область видимости
 // Пешеходы должны иметь возможность с каким-то шансом вставать посреди дороги и смотреть на водителя
 // Добавление ям на обочине в силе
 // Возможно добавление следа от шин при торможении
-// Добавить динамику
 // Добавить систему счета + усложнения игры в зависимости от очков
 // Возможно изменение времени суток и изменение погоды (ориентироваться на оставшееся время)
 
@@ -12,10 +9,10 @@ const TIMER_INTERVAL = 16; // Интервал в миллисекундах (п
 const CANVAS = document.getElementById("canvas");
 const CONTEXT = CANVAS.getContext("2d");
 const SCALE = (CANVAS.width + CANVAS.height) / 1200; //Масштаб машин
-const DECELERATION = 0.2; // Замедление при торможении
+const DECELERATION = 0.3; // Замедление при торможении
 const NATURAL_DECELERATION = DECELERATION / 2; // Естественное замедление при отпускании W
-const MAX_SPEED = 3.5; // Максимальная скорость
-const MAX_CAR_SPEED = 3;
+const MAX_SPEED = 3; // Максимальная скорость
+const MAX_CAR_SPEED = 4;
 
 let currentSpeed = 0; // Текущая скорость игрока
 let isBraking = false; // Флаг торможения
@@ -226,7 +223,20 @@ function Update() {
     if (RandomInteger(0, 10000) > chanceOfCarSpawnVal) {
         let randomCarX = RandomInteger(roadsideLeftBorder, roadsideRightBorder);
         let randomCarY = RandomInteger(-100, -50); // Генерация случайной координаты y за пределами видимой области сверху
-        let car = new Car("images/car_red.png", randomCarX, randomCarY);
+        let randomNumberOfCarColor = RandomInteger(1, 3);
+        let carSrc;
+        switch (randomNumberOfCarColor) {
+            case 1:
+                carSrc = "images/car_yellow.jpg";
+                break;
+            case 2:
+                carSrc = "images/car_red.png";
+                break;
+            case 3:
+                carSrc = "images/car_pink.jpg";
+                break;
+        }
+        let car = new Car(carSrc, randomCarX, randomCarY);
         if (checkIfCarAbleToSpawn(car, cars)) { // Передача массива всех машин
             cars.push(car);
         }
