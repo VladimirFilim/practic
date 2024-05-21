@@ -247,15 +247,15 @@ function Update() {
 
     if (RandomInteger(0, 10000) > chanceOfPedestrianSpawnVal) { //создание новых пешеходов
         let pedestrianOptions = {
-            scale: (CANVAS.width + CANVAS.height) / 500,
-            width: 16,
-            height: 18,
+            scale: 4,
+            width: 72,
+            height: 72,
             c_loop: [0, 1, 0, 2],
             facing_down: 0,
             facing_up: 1,
             facing_left: 2,
             facing_right: 3,
-            frame_limit: RandomInteger(3, 12),
+            frame_limit: RandomInteger(2, 27),
             movement_speed: RandomInteger(1, 5),
             spriteX: 10,
             spriteY: RandomInteger(0, CANVAS.height * 0.25)
@@ -395,7 +395,6 @@ function Draw() { //Работа с графикой
     for (let i = 0; i < cars.length; i++) {
         DrawCar(cars[i]);
     }
-
     for (let i = 0; i < pedestrians.length; i++) {
         pedestrians[i].drawFrame();
     }
