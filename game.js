@@ -147,10 +147,42 @@ class Car {
 
     CollideWithCar(car) {
         let hit = false;
-        if (this.y < car.y + car.image.height * SCALE && this.y + this.image.height * SCALE > car.y) {//Если объекты находятся на одной линии по горизонтали
-            if (this.x < car.x + car.image.width * SCALE && this.x + this.image.width * SCALE > car.x) { //Если объекты находятся на одной линии по вертикали
-                hit = true;
-            }
+
+        // Определение масштабированных размеров текущей машины
+        let thisScaledWidth, thisScaledHeight;
+        if (this.image.src.endsWith("images/car_yellow.png")) {
+            thisScaledWidth = this.image.width * SCALE_OF_YELLOW_CAR;
+            thisScaledHeight = this.image.height * SCALE_OF_YELLOW_CAR;
+        } else if (this.image.src.endsWith("images/car_pink.png")) {
+            thisScaledWidth = this.image.width * SCALE_OF_PINK_CAR;
+            thisScaledHeight = this.image.height * SCALE_OF_PINK_CAR;
+        } else if (this.image.src.endsWith("images/car_red.png")) {
+            thisScaledWidth = this.image.width * SCALE_OF_RED_CAR;
+            thisScaledHeight = this.image.height * SCALE_OF_RED_CAR;
+        } else {
+            thisScaledWidth = this.image.width * SCALE;
+            thisScaledHeight = this.image.height * SCALE;
+        }
+
+        // Определение масштабированных размеров машины, с которой происходит столкновение
+        let otherScaledWidth, otherScaledHeight;
+        if (car.image.src.endsWith("images/car_yellow.png")) {
+            otherScaledWidth = car.image.width * SCALE_OF_YELLOW_CAR;
+            otherScaledHeight = car.image.height * SCALE_OF_YELLOW_CAR;
+        } else if (car.image.src.endsWith("images/car_pink.png")) {
+            otherScaledWidth = car.image.width * SCALE_OF_PINK_CAR;
+            otherScaledHeight = car.image.height * SCALE_OF_PINK_CAR;
+        } else if (car.image.src.endsWith("images/car_red.png")) {
+            otherScaledWidth = car.image.width * SCALE_OF_RED_CAR;
+            otherScaledHeight = car.image.height * SCALE_OF_RED_CAR;
+        } else {
+            otherScaledWidth = car.image.width * SCALE;
+            otherScaledHeight = car.image.height * SCALE;
+        }
+
+        if (this.y < car.y + otherScaledHeight && this.y + thisScaledHeight > car.y &&
+            this.x < car.x + otherScaledWidth && this.x + thisScaledWidth > car.x) {
+            hit = true;
         }
         return hit;
     }
