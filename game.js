@@ -8,18 +8,21 @@
 const TIMER_INTERVAL = 16; // Интервал в миллисекундах (примерно 60 кадров в секунду)
 const CANVAS = document.getElementById("canvas");
 const CONTEXT = CANVAS.getContext("2d");
-const SCALE = (CANVAS.width + CANVAS.height) / 1200; //Масштаб машин
-const DECELERATION = 0.3; // Замедление при торможении
+const SCALE = (CANVAS.width + CANVAS.height) / 1000; //Масштаб машин
+const DECELERATION = 0.6; // Замедление при торможении
 const NATURAL_DECELERATION = DECELERATION / 2; // Естественное замедление при отпускании W
-const MAX_SPEED = 3; // Максимальная скорость
-const MAX_CAR_SPEED = 4;
+const MAX_SPEED = 5; // Максимальная скорость
+const MAX_CAR_SPEED = 3;
+const SCALE_OF_RED_CAR = SCALE * 2;
+const SCALE_OF_YELLOW_CAR = SCALE * 4.2;
+const SCALE_OF_PINK_CAR = SCALE * 4.2;
 
 let currentSpeed = 0; // Текущая скорость игрока
 let isBraking = false; // Флаг торможения
 let isAccelerating = false; // Флаг ускорения
 let carMovementSpeed = 3; // Скорость движения (можете настроить)
 let timer = setInterval(onTimer, TIMER_INTERVAL);
-let chanceOfCarSpawnVal = 9830;
+let chanceOfCarSpawnVal = 9900;
 let chanceOfPedestrianSpawnVal = 9960;
 let isMovingRight, isMovingLeft, isMovingUp, isMovingDown = false;
 let roadsideRightBorder;
@@ -55,14 +58,14 @@ class Sprite {
         this.WIDTH = sp_options.width;   // ширина кадра
         this.HEIGHT = sp_options.height;  //высота кадра
         this.SCALED_WIDTH = sp_options.scale * sp_options.width; // ширина увеличенного кадра (для отрисовки)
-        this.SCALED_HEIGHT = sp_options.scale * sp_options.height;  //высота увеличенного кадра 
+        this.SCALED_HEIGHT = sp_options.scale * sp_options.height;  //высота увеличенного кадра
         this.C_LOOP = sp_options.c_loop;  // порядок отрисовки кадров
         this.FACING_DOWN = sp_options.facing_down;  // номер строки кадров при движении вниз
         this.FACING_UP = sp_options.facing_up;      // номер строки кадров при движении вверх
         this.FACING_LEFT = sp_options.facing_left;   // номер строки кадров при движении влево
         this.FACING_RIGHT = sp_options.facing_right;   // номер строки кадров при движении вправо
         this.FRAME_LIMIT = sp_options.frame_limit;     // общее количество кадров
-        this.MOVEMENT_SPEED = sp_options.movement_speed;  //скорость 
+        this.MOVEMENT_SPEED = sp_options.movement_speed;  //скорость
         this.keyPresses = {};
         this.currentDirection = sp_options.facing_down;
         this.currentLoopIndex = 0;
@@ -227,13 +230,13 @@ function Update() {
         let carSrc;
         switch (randomNumberOfCarColor) {
             case 1:
-                carSrc = "images/car_yellow.jpg";
+                carSrc = "images/car_yellow.png";
                 break;
             case 2:
                 carSrc = "images/car_red.png";
                 break;
             case 3:
-                carSrc = "images/car_pink.jpg";
+                carSrc = "images/car_pink.png";
                 break;
         }
         let car = new Car(carSrc, randomCarX, randomCarY);
@@ -244,7 +247,7 @@ function Update() {
 
     if (RandomInteger(0, 10000) > chanceOfPedestrianSpawnVal) { //создание новых пешеходов
         let pedestrianOptions = {
-            scale: (CANVAS.width + CANVAS.height) / 550,
+            scale: (CANVAS.width + CANVAS.height) / 500,
             width: 16,
             height: 18,
             c_loop: [0, 1, 0, 2],
@@ -260,7 +263,7 @@ function Update() {
         for (let i = 0; i < pedestrians.length; i++) {
             pedestrians[i].drawFrame();
         }
-        pedestrians.push(new Sprite(pedestrianOptions, 'images/gc.png'));
+        pedestrians.push(new Sprite(pedestrianOptions, 'images/pedestrian_sprite01.png'));
     }
 
     for (let i = 0; i < cars.length; i++) {
@@ -310,20 +313,55 @@ function Update() {
 }
 
 function checkIfCarAbleToSpawn(car, allCars) {
-    // Проверка, что машина не появится на другой машине
+    let carScaleWidth, carScaleHeight;
+
+    // Определение масштабируемых размеров для новой машины
+    if (car.image.src.endsWith("images/car_yellow.png")) {
+        carScaleWidth = car.image.width * SCALE_OF_YELLOW_CAR;
+        carScaleHeight = car.image.height * SCALE_OF_YELLOW_CAR;
+    } else if (car.image.src.endsWith("images/car_pink.png")) {
+        carScaleWidth = car.image.width * SCALE_OF_PINK_CAR;
+        carScaleHeight = car.image.height * SCALE_OF_PINK_CAR;
+    } else if (car.image.src.endsWith("images/car_red.png")) {
+        carScaleWidth = car.image.width * SCALE_OF_RED_CAR;
+        carScaleHeight = car.image.height * SCALE_OF_RED_CAR;
+    } else {
+        carScaleWidth = car.image.width * SCALE;
+        carScaleHeight = car.image.height * SCALE;
+    }
+
     let isNotOnAnotherCar = true;
     for (let i = 0; i < allCars.length; i++) {
         let otherCar = allCars[i];
-        if (car.x < otherCar.x + otherCar.image.width * SCALE &&
-            car.x + car.image.width * SCALE > otherCar.x &&
-            car.y + car.image.height * SCALE > otherCar.y) {
-            isNotOnAnotherCar = false; // Появится на другой машине
-            console.log("Car spawn rejected!!!")
+        let otherCarScaleWidth, otherCarScaleHeight;
+
+        // Определение масштабируемых размеров для существующей машины
+        if (otherCar.image.src.endsWith("images/car_yellow.png")) {
+            otherCarScaleWidth = otherCar.image.width * SCALE_OF_YELLOW_CAR;
+            otherCarScaleHeight = otherCar.image.height * SCALE_OF_YELLOW_CAR;
+        } else if (otherCar.image.src.endsWith("images/car_pink.png")) {
+            otherCarScaleWidth = otherCar.image.width * SCALE_OF_PINK_CAR;
+            otherCarScaleHeight = otherCar.image.height * SCALE_OF_PINK_CAR;
+        } else if (otherCar.image.src.endsWith("images/car_red.png")) {
+            otherCarScaleWidth = otherCar.image.width * SCALE_OF_RED_CAR;
+            otherCarScaleHeight = otherCar.image.height * SCALE_OF_RED_CAR;
+        } else {
+            otherCarScaleWidth = otherCar.image.width * SCALE;
+            otherCarScaleHeight = otherCar.image.height * SCALE;
+        }
+
+        if (car.x < otherCar.x + otherCarScaleWidth &&
+            car.x + carScaleWidth > otherCar.x &&
+            car.y < otherCar.y + otherCarScaleHeight &&
+            car.y + carScaleHeight > otherCar.y) {
+            isNotOnAnotherCar = false;
+            console.log("Car spawn rejected!!!");
             break;
         }
     }
     return isNotOnAnotherCar;
 }
+
 
 function bum() {
     if (gifOptions.numFrame < gifOptions.src.length) {
@@ -431,8 +469,6 @@ function onTimer() {
     } else {
         currentSpeed = Math.max(currentSpeed - NATURAL_DECELERATION, 0); // Естественное замедление
     }
-
-
     player.y -= currentSpeed; // Обновляем положение игрока с учетом текущей скорости
     roads.forEach(road => road.y += currentSpeed);
     cars.forEach(car => car.y += currentSpeed); // Двигать машины вниз
@@ -444,8 +480,24 @@ function Resize() {
     CANVAS.height = window.innerHeight;
 }
 
+function DrawCar(car) {
+    let scaleWidth;
+    let scaleHeight;
 
-function DrawCar(car) { // отрисовка автомобиля
+    if (car.image.src.endsWith("images/car_yellow.png")) {
+        scaleWidth = car.image.width * SCALE_OF_YELLOW_CAR;
+        scaleHeight = car.image.height * SCALE_OF_YELLOW_CAR;
+    } else if (car.image.src.endsWith("images/car_pink.png")) {
+        scaleWidth = car.image.width * SCALE_OF_PINK_CAR;
+        scaleHeight = car.image.height * SCALE_OF_PINK_CAR;
+    } else if (car.image.src.endsWith("images/car_red.png")) {
+        scaleWidth = car.image.width * SCALE_OF_RED_CAR;
+        scaleHeight = car.image.height * SCALE_OF_RED_CAR;
+    } else {
+        scaleWidth = car.image.width * SCALE;
+        scaleHeight = car.image.height * SCALE;
+    }
+
     CONTEXT.drawImage(
         car.image,
         0,
@@ -454,8 +506,8 @@ function DrawCar(car) { // отрисовка автомобиля
         car.image.height,
         car.x,
         car.y,
-        car.image.width * SCALE,
-        car.image.height * SCALE
+        scaleWidth,
+        scaleHeight
     );
 }
 
