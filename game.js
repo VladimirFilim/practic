@@ -280,8 +280,8 @@ function Update() {
     if (RandomInteger(0, 10000) > chanceOfPedestrianSpawnVal) { //создание новых пешеходов
         let pedestrianOptions = {
             scale: 4,
-            width: 72,
-            height: 72,
+            width: 95,
+            height: 66,
             c_loop: [0, 1, 0, 2],
             facing_down: 0,
             facing_up: 1,
