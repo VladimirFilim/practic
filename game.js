@@ -279,7 +279,7 @@ function Update() {
 
     if (RandomInteger(0, 10000) > chanceOfPedestrianSpawnVal) { //создание новых пешеходов
         let pedestrianOptions = {
-            scale: 4,
+            scale: 2,
             width: 95,
             height: 66,
             c_loop: [0, 1, 0, 2],
@@ -288,7 +288,7 @@ function Update() {
             facing_left: 2,
             facing_right: 3,
             frame_limit: RandomInteger(2, 27),
-            movement_speed: RandomInteger(1, 5),
+            movement_speed: RandomInteger(1, 8),
             spriteX: 10,
             spriteY: RandomInteger(0, CANVAS.height * 0.25)
         };
@@ -310,7 +310,7 @@ function Update() {
         pedestrians[i].Update();
         pedestrians[i].moveLoop();
 
-        if (pedestrians[i].spriteX >= CANVAS.width - 100) {
+        if (pedestrians[i].spriteX >= CANVAS.width - pedestrians[i].SCALED_WIDTH - 50) {
             pedestrians.splice(i, 1);
         }
     }
